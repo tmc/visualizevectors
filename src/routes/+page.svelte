@@ -36,6 +36,7 @@
 			canvas,
 			antialias: true
 		});
+
 		// Add event listeners for keyboard controls
 		document.addEventListener('keydown', onKeyDown);
 		document.addEventListener('keyup', onKeyUp);
@@ -44,7 +45,8 @@
 			LEFT: 'KeyA',
 			UP: 'KeyW',
 			RIGHT: 'KeyD',
-			DOWN: 'KeyS'
+			DOWN: 'KeyS',
+			O: 'KeyO'
 		};
 
 		let movement = {
@@ -68,6 +70,11 @@
 				case keys.RIGHT:
 					movement.right = true;
 					break;
+				case keys.O:
+					var url = window.location.hash;
+					url = url.replace('#', '');
+					console.log('opening new tab', url);
+					window.open(url, '_blank');
 			}
 		}
 
@@ -123,6 +130,8 @@
 			});
 
 			const cube = new THREE.Mesh(geometry, material);
+			cube.cursor = 'pointer';
+			const cubeURL = Object.values(data);
 			cube.name = Object.keys(data)[i];
 			cube.position.copy(position);
 			scene.add(cube);
@@ -157,6 +166,7 @@
 
 		animate();
 		document.addEventListener('mousemove', onMouseMove);
+		// document.addEventListener('click', onMouseClick);
 		document.addEventListener('mouseleave', onMouseLeave);
 
 		function onMouseMove(event: { clientX: number; clientY: number }) {
@@ -175,10 +185,14 @@
 				// Retrieve metadata for the hovered cube
 				const cubeName = intersectedObject.name;
 				const cubeData = data[cubeName];
-				console.log(cubeData);
+				//console.log(cubeData);
 				thread_id_num = cubeName;
 				chat_data = cubeData.chat;
+				const url = cubeData['url'];
+				window.location.hash = url;
+				console.log(cubeName, cubeData.chat);
 				// outline the cube only on hover
+
 				if (outlinedObjects.length > 1) {
 					outlinedObjects[0][0].material = outlinedObjects[0][1];
 					outlinedObjects.shift();
@@ -189,6 +203,27 @@
 					wireframe: true
 				});
 				outlinedObjects.push([intersectedObject, prevMaterial]);
+			}
+		}
+		function onMouseClick(event: { clientX: number; clientY: number }) {
+			console.log('clicked');
+			// Calculate normalized device coordinates
+			mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+			// Perform raycasting to check intersection with cubes
+			raycaster.setFromCamera(mouse, camera);
+			const intersects = raycaster.intersectObjects(scene.children);
+
+			console.log(intersects);
+			// Check if any cube is being hovered
+			if (intersects.length > 0) {
+				const intersectedObject = intersects[0].object;
+				const cubeName = intersectedObject.name;
+				const cubeData = data[cubeName];
+				const url = cubeData['url'];
+				// set window location to the url (but don't navigate):
+				window.open(url, '_blank');
 			}
 		}
 
